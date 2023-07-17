@@ -21,10 +21,8 @@ while togive:
         else:
             with open('give.bat', 'rb') as f:
                 p = pickle.load(f)
-                print(p)
             if p:
                 wind = get(*p)
-                print(wind)
                 if wind:
                     with open('take.bat', 'wb') as f:
                         pickle.dump(wind, f)

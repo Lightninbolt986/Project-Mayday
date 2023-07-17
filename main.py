@@ -231,7 +231,6 @@ while active:
     if i%framerate==0:
         height = findTerrainHeight(p.la,p.lo)
         wind = p.getWind()
-        print(wind)
     renderUI()
     i+=1
 
