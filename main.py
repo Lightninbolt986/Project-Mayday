@@ -4,7 +4,7 @@ print("loading data")
 terrainFile = open("terrainDataHighRes.CSV") # swap this for terrainDataHighRes.CSV, prpgram will automatically detect and use higher resolution
 terrain = list(csv.reader(terrainFile))
 print("data has been loaded")
-
+# test comit
 framerate = 100 #frames per second
 clock = pygame.time.Clock()
 window = pygame.display.set_mode((800,500))
