@@ -1,4 +1,4 @@
-import csv, math, pygame
+import csv, math, pygame, pickle
 
 print("loading data")
 terrainFile = open("terrainDataHighRes.CSV") # swap this for terrainDataHighRes.CSV, prpgram will automatically detect and use higher resolution
@@ -110,6 +110,14 @@ class Plane:
     def flapDown(self):
         if p.flaps!= allFlaps[0]:
             p.flaps = allFlaps[allFlaps.index(p.flaps)-1]
+    def getWind(self):
+        with open('give.bat', 'wb') as f:
+            pickle.dump((self.la,self.lo), f)
+        try:
+            with open("take.bat","rb") as f:
+                return pickle.load(f)
+        except FileNotFoundError:
+            return(0,0 )
 
 #ui rendering
 font = pygame.font.Font('freesansbold.ttf', 32)
@@ -222,6 +230,8 @@ while active:
     p.resolveMotion()
     if i%framerate==0:
         height = findTerrainHeight(p.la,p.lo)
+        wind = p.getWind()
+        print(wind)
     renderUI()
     i+=1
 
