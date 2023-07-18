@@ -25,9 +25,24 @@ def findTerrainHeight(la,lo): #latitude and longitude +for N -for S +for W -for 
     rlo = round(lo*resolution)/resolution #rounded longitude
     x = (float(terrain[int(rla*resolution)][int(rlo*resolution)]))
     if x==99999:
-        return -1
+        return 0
     else:
         return x
+
+def startUp():
+    f = open("airports.csv","r")
+    reader = list(csv.reader(f))
+    print("\n".join([f'{port[4]} : {port[1]}' for port in reader]))
+    codes = [port[4] for port in reader]
+    while True:
+        userCode = input("Enter airport from the following:").upper()
+        if userCode in codes:
+            selected = codes.index(userCode)
+            print("Simulation started")
+            return float(reader[selected][2]), -float(reader[selected][3]), float(reader[selected][6])
+        else: 
+            print("Cannot recognise code, try again")
+
 warning = "unknown"
 allFlaps = [0,10,20,30]
 class Plane:
@@ -110,6 +125,7 @@ class Plane:
     def flapDown(self):
         if p.flaps!= allFlaps[0]:
             p.flaps = allFlaps[allFlaps.index(p.flaps)-1]
+    
     def getWind(self):
         with open('give.bat', 'wb') as f:
             pickle.dump((self.la,self.lo), f)
@@ -117,7 +133,7 @@ class Plane:
             with open("take.bat","rb") as f:
                 return pickle.load(f)
         except FileNotFoundError:
-            return(0,0 )
+            return(0,0)
 
 #ui rendering
 font = pygame.font.Font('freesansbold.ttf', 32)
@@ -177,13 +193,16 @@ def renderUI():
     #compas rose
     pygame.draw.circle(window,(200,200,100),(300,180),70)
     pygame.draw.circle(window,(80,80,250),(300,180),65)
-    pygame.draw.line(window,(190,190,220),(300,180),(300+30*math.sin(0*math.pi/180),180-30*math.cos(0*math.pi/180)),2) #wind direction (replace 0 with wind direction in degrees)
+    pygame.draw.line(window,(190,190,220),(300,180),(300+30*math.sin(wind[1]*math.pi/180),180-30*math.cos(wind[1]*math.pi/180)),2) #wind direction (replace 0 with wind direction in degrees)
     pygame.draw.line(window,(255,0,255),(300,180),(300-50*math.sin(p.heading*math.pi/180),180-50*math.cos(p.heading*math.pi/180)),5) #plane heading 
     
 
     pygame.display.update()
 
-p = Plane(28.7041, -77.1025, 0, 220)
+#initialising the plane
+startLa, startLo, startHeading = startUp()
+startHeight = findTerrainHeight(startLa,startLo)
+p = Plane(startLa,startLo,startHeading, startHeight)
 
 i=0
 active = True
@@ -233,12 +252,4 @@ while active:
         wind = p.getWind()
     renderUI()
     i+=1
-
-#TO DO
-# wind
-#airport selector   
-# landing
-# heading compas rose
-#autopilot?
-#aesthetic roll?
-
+    print(wind)

@@ -1,11 +1,11 @@
-id,name,latitude_deg,longitude_deg,iata_code,runway,
-2218,Munich Airport,48.353802,11.7861,MUC,08L,
-2434,London Heathrow Airport,51.4706,-0.461941,LHR,27R,
-3622,John F Kennedy International Airport,40.639447,-73.779317,JFK,31L,
-3632,Los Angeles / Tom Bradley International Airport,33.942501,-118.407997,LAX,06R,
-4185,Charles de Gaulle International Airport,49.012798,2.55,CDG,27L,
-333692,Islamabad International Airport,33.549,72.82566,ISB,28L,
-26496,Netaji Subhash Chandra Bose International Airport,22.65469933,88.44670105,CCU,1R,
-26555,Indira Gandhi International Airport,28.55563,77.09519,DEL,11R,
-26887,Singapore Changi Airport,1.35019,103.994003,SIN,10R,
-27066,Melbourne International Airport,-37.673302,144.843002,MEL,27L,
+id,name,latitude_deg,longitude_deg,iata_code,runway,heading
+2218,Munich Airport,48.353802,11.7861,MUC,08L,80
+2434,London Heathrow Airport,51.4706,-0.461941,LHR,27R,270
+3622,John F Kennedy International Airport,40.639447,-73.779317,JFK,31L,310
+3632,Los Angeles / Tom Bradley International Airport,33.942501,-118.407997,LAX,06R,60
+4185,Charles de Gaulle International Airport,49.012798,2.55,CDG,27L,270
+333692,Islamabad International Airport,33.549,72.82566,ISB,28L,280
+26496,Netaji Subhash Chandra Bose International Airport,22.65469933,88.44670105,CCU,1R,10
+26555,Indira Gandhi International Airport,28.55563,77.09519,DEL,11R,110
+26887,Singapore Changi Airport,1.35019,103.994003,SIN,10R,100
+27066,Melbourne International Airport,-37.673302,144.843002,MEL,27L,270
