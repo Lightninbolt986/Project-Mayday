@@ -1,4 +1,9 @@
-import csv, math, pygame, pickle
+import csv, math, pygame, pickle, serial 
+try:
+    ser = serial.Serial('COM3', 9600)
+except:
+    pass
+ser.flush(); ser.flushInput(); ser.flushOutput()
 
 print("loading data")
 terrainFile = open("terrainDataHighRes.CSV") # swap this for terrainDataHighRes.CSV, prpgram will automatically detect and use higher resolution
@@ -14,6 +19,7 @@ latitudes = len(terrain)
 longitudes = len(terrain[0])
 resolution = longitudes/360 #1 to 10
 height = 0
+wind = (0,0)
 
 def findTerrainHeight(la,lo): #latitude and longitude +for N -for S +for W -for E
     global resolution
@@ -61,6 +67,8 @@ class Plane:
         self.thrustr = 0
         self.flaps = 0
         self.state = "landed"
+        self.headwind = 0
+        self.crosswind = 0
     
     def pitchSpeedDropOG(self,speed,pitch): #uses old curve
         exponent = (pitch-90)/18
@@ -81,12 +89,16 @@ class Plane:
         self.yawt = (self.thrustl - self.thrustr)*0.01 #assymetry constant
         self.rollt = 0
         self.pitcht = 0
+        self.airspeed = 0
+
+        self.headwind = wind[0]*math.cos((wind[1]-self.heading)*math.pi/180)
+        self.crosswind = -wind[0]*math.sin((wind[1]-self.heading)*math.pi/180)
 
         minSpeed = 400 - p.flaps*10
-        if (minSpeed > p.speed) and p.state == "airborne":
+        if (minSpeed > p.speed+ + p.headwind) and p.state == "airborne":
             p.pitcht = 1
             warning = "underspeed"
-        elif (minSpeed+100) < p.speed:
+        elif (minSpeed+100) < p.speed + p.headwind:
             p.pitcht = -1
             warning = "overspeed"
         else:
@@ -96,9 +108,13 @@ class Plane:
             p.state = "airborne"
     
     def resolveMotion(self):
-        verticalSpeed = -(self.speed)*math.sin(self.pitch*(math.pi/180)) #degree per second convertor
+        if self.state == "airborne":
+            self.airspeed = self.speed + self.headwind
+        else:
+            self.airspeed = self.speed
+        verticalSpeed = -(self.airspeed)*math.sin(self.pitch*(math.pi/180)) #degree per second convertor
         self.height += verticalSpeed*0.51444/framerate #knots to m/s
-        horizontalSpeed = self.speed*math.cos(self.pitch*math.pi/180)/216000
+        horizontalSpeed = self.airspeed*math.cos(self.pitch*math.pi/180)/216000
         ycomp = horizontalSpeed*math.cos(self.heading*math.pi/180)
         xcomp = -horizontalSpeed*math.sin(self.heading*math.pi/180) 
         self.la += ycomp/framerate
@@ -151,6 +167,7 @@ def rot_center(image, angle, x, y):
     return rotated_image, new_rect
 
 def renderUI():
+    global xinput, yinput
     
     stateText = p.formatState()
     st1,st2,st3 = font.render(stateText[0], True, (255,255,255)),font.render(stateText[1], True, (255,255,255)),font.render(stateText[2], True, (255,255,255))
@@ -181,8 +198,8 @@ def renderUI():
     window.blit(t2, (180,340))
     window.blit(t3, (180,400))
 
-    t4 = font.render("S(grnd):"+str(round(p.speed)),True,(230,230,200))
-    t5 = font.render("S(air):"+str(round(0)),True,(230,230,200))
+    t4 = font.render("S(grnd):"+str(round(p.speed,1)),True,(230,230,200))
+    t5 = font.render("S(air):"+str(round(p.airspeed,1)),True,(230,230,200))
     window.blit(t4,(320,450))
     window.blit(t5,(320,410))
 
@@ -194,8 +211,13 @@ def renderUI():
     pygame.draw.circle(window,(200,200,100),(300,180),70)
     pygame.draw.circle(window,(80,80,250),(300,180),65)
     pygame.draw.line(window,(190,190,220),(300,180),(300+30*math.sin(wind[1]*math.pi/180),180-30*math.cos(wind[1]*math.pi/180)),2) #wind direction (replace 0 with wind direction in degrees)
-    pygame.draw.line(window,(255,0,255),(300,180),(300-50*math.sin(p.heading*math.pi/180),180-50*math.cos(p.heading*math.pi/180)),5) #plane heading 
-    
+    pygame.draw.line(window,(255,0,255),(300,180),(300-50*math.sin(p.heading*math.pi/180),180-50*math.cos(p.heading*math.pi/180)),5) #plane heading
+
+    #input cross
+    pygame.draw.rect(window,(50,50,50),(655,55,100,10)) #horizontal bar
+    pygame.draw.rect(window,(50,50,50),(700,10,10,100)) #vertical bar
+    pygame.draw.rect(window,(200,50,200),(xinput,55,4,10)) #horizonal mover
+    pygame.draw.rect(window,(200,50,200),(700,yinput,10,4))#vertical mover
 
     pygame.display.update()
 
@@ -203,6 +225,23 @@ def renderUI():
 startLa, startLo, startHeading = startUp()
 startHeight = findTerrainHeight(startLa,startLo)
 p = Plane(startLa,startLo,startHeading, startHeight)
+
+def arduinoStuff():
+    global xinput, yinput
+    deadzone = 100
+    try:
+        combined = int(float((ser.readline().decode('utf-8').rstrip())))
+        valA = combined//1024 -512
+        valB = combined%1024 -512
+    except:
+        valA, valB = 0,0
+    if abs(valA) > deadzone:
+        p.pitcht -= valA/75
+    if abs(valB) > deadzone:
+        p.rollt -= valB/75
+    print(valA, valB)
+    xinput = (valB *50/512)+705 -2
+    yinput = (valA *50/512)+60 -2
 
 i=0
 active = True
@@ -243,13 +282,18 @@ while active:
         p.thrustr -= 30/framerate
     
     #main sim loop
+    #mospos = pygame.mouse.get_pos()#nein
+    #xinput = mospos[0]
+    #yinput = mospos[1]
+        
     heightG = p.height - height #height from ground = height from sea level - terrain height
     clock.tick(framerate)
     p.physics()
     p.resolveMotion()
+    arduinoStuff()
     if i%framerate==0:
         height = findTerrainHeight(p.la,p.lo)
         wind = p.getWind()
     renderUI()
     i+=1
-    print(wind)
+    
