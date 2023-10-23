@@ -1,16 +1,16 @@
 import csv, math, pygame, pickle, serial 
 try:
     ser = serial.Serial('COM3', 9600)
+    ser.reset_input_buffer()
 except:
     pass
-ser.flush(); ser.flushInput(); ser.flushOutput()
 
 print("loading data")
 terrainFile = open("terrainDataHighRes.CSV") # swap this for terrainDataHighRes.CSV, prpgram will automatically detect and use higher resolution
 terrain = list(csv.reader(terrainFile))
 print("data has been loaded")
 # test comit
-framerate = 100 #frames per second
+framerate = 20 #frames per second
 clock = pygame.time.Clock()
 window = pygame.display.set_mode((800,500))
 pygame.init()
@@ -239,7 +239,7 @@ def arduinoStuff():
         p.pitcht -= valA/75
     if abs(valB) > deadzone:
         p.rollt -= valB/75
-    print(valA, valB)
+    #print(valA, valB)
     xinput = (valB *50/512)+705 -2
     yinput = (valA *50/512)+60 -2
 
