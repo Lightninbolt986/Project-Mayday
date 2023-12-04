@@ -2,7 +2,7 @@ import requests,time, pickle, os
 from dotenv import load_dotenv
 load_dotenv()
 togive = True
-key = os.getenv('KEY')
+key = os.getenv('OPENWEATHERMAP_KEY')
 if(not key):
     print("Please set your API key in a .env file. Refer to the README for more information.")
     togive = False
